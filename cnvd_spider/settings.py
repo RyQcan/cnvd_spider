@@ -64,9 +64,9 @@ DOWNLOAD_DELAY = 0.5
 
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-# ITEM_PIPELINES = {
-#    'cnvd_spider.pipelines.CnvdSpiderPipeline': 300,
-# }
+ITEM_PIPELINES = {
+   'cnvd_spider.pipelines.CnvdSpiderPipeline': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
