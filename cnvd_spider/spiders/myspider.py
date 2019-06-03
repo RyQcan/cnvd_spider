@@ -5,25 +5,16 @@ import re
 from scrapy.selector import Selector
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
-
-# class MyspiderSpider(scrapy.Spider):
-#     name = 'myspider'
-#     allowed_domains = ['www.cnvd.org.cn']
-#     start_urls = ['http://www.cnvd.org.cn/flaw/show/1117474']
-
-#     def parse(self, response):
-#         items = response.xpath("//div[@class='blkContainerSblk']//tr/td")
-#         for i_item in items:
-#             print(i_item)
+import time
+import random
 
 
 class ExampleSpider(CrawlSpider):
     name = "myspider"
     allowed_domains = ["www.cnvd.org.cn"]
-    # start_urls = ['http://www.cnvd.org.cn/flaw/show/1117474']
-    start_urls = ['http://www.cnvd.org.cn/flaw/typelist?typeId=29']
+    start_urls = ['http://www.cnvd.org.cn/flaw/list.htm?max=20&offset=20']
     rules = (
-        Rule(LinkExtractor(allow=r"/flaw/show/*"),
+        Rule(LinkExtractor(allow=r"/flaw/show/*", unique=True),
              callback="parse_news", follow=True),
     )
 
@@ -33,6 +24,7 @@ class ExampleSpider(CrawlSpider):
 
     def parse_news(self, response):
         item = CnvdSpiderItem()
+        time.sleep(random.randint(1, 2))
         self.get_url(response, item)
         self.get_name(response, item)
         self.get_id(response, item)
@@ -40,7 +32,7 @@ class ExampleSpider(CrawlSpider):
         self.get_level(response, item)
         self.get_products(response, item)
 
-        self.get_cve_id(response, item)
+        # self.get_cve_id(response, item)
         self.get_detail(response, item)
         self.get_types(response, item)
         self.get_refer_url(response, item)
@@ -54,8 +46,9 @@ class ExampleSpider(CrawlSpider):
 
     def get_name(self, response, item):
         name = response.xpath(
-            "//div[@class='blkContainerSblk']//h1/text()").extract()
-
+            # "//div[@class='blkContainerSblk']//h1/text()").extract()
+            "//h1/text()").extract()
+        print("\n======="+str(name)+"================\n")
         if name:
             item['cnvd_name'] = name[0].strip()
             # print("cnvd_name: "+item['cnvd_name']+'\n')
@@ -66,7 +59,6 @@ class ExampleSpider(CrawlSpider):
             "//table[@class='gg_detail']//tr[td[1]='CNVD-ID']/td[2]/text()").extract()
         if iid:
             item['cnvd_id'] = iid[0].strip()
-            print(item['cnvd_id']+"=================")
 
     # 2
 
@@ -97,15 +89,17 @@ class ExampleSpider(CrawlSpider):
 
     # 5
 
-    def get_cve_id(self, response, item):
-        item['cnvd_cve_id'] =''
-        cve_id = response.xpath(
-            "//table[@class='gg_detail']//tr[td[1]='CVE ID']/td[2]//text()").extract()
-        if cve_id:
-            temp = ''
-            for i in range(len(cve_id)):
-                temp += cve_id[i].strip()
-            item['cnvd_cve_id'] = temp
+    # def get_cve_id(self, response, item):
+    #     try:
+    #         cve_id = response.xpath(
+    #             "//table[@class='gg_detail']//tr[td[1]='CVE ID']/td[2]//text()").extract()
+    #         if cve_id:
+    #             temp = ''
+    #             for i in range(len(cve_id)):
+    #                 temp += cve_id[i].strip()
+    #             item['cnvd_cve_id'] = temp
+    #     except:
+    #         item['cnvd_cve_id'] = ''
 
     # 6
 

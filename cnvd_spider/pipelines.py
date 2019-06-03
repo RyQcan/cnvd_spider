@@ -27,7 +27,7 @@ class Cnvdtable(Base):
     cnvd_date = Column(String(32))
     cnvd_level = Column(String(32))
     cnvd_products = Column(String(64))
-    cnvd_cve_id = Column(String(32))
+    # cnvd_cve_id = Column(String(32))
     cnvd_detail = Column(TEXT)
     cnvd_types = Column(String(32))
     cnvd_refer_url = Column(String(64))
@@ -40,7 +40,7 @@ class Cnvdtable(Base):
 
 
 Base.metadata.create_all(engine)
-session.execute('alter table learn_newstable convert to character set gbk')
+session.execute('alter table cnvd_table convert to character set gbk')
 
 
 class CnvdSpiderPipeline(object):
@@ -59,6 +59,7 @@ class CnvdSpiderInfoPipeline(object):
         try:
             line = str(dict(item)) + '\n'
             self.f.write(line)
+            print("\n"+dic['cnvd_name']+" ==============写入成功\n")
             dic = dict(item)
             obc = Cnvdtable(
                 cnvd_url=dic['cnvd_url'],
@@ -67,7 +68,7 @@ class CnvdSpiderInfoPipeline(object):
                 cnvd_date=dic['cnvd_date'],
                 cnvd_level=dic['cnvd_level'],
                 cnvd_products=dic['cnvd_products'],
-                cnvd_cve_id=dic['cnvd_cve_id'],
+                # cnvd_cve_id=dic['cnvd_cve_id'],
                 cnvd_detail=dic['cnvd_detail'],
                 cnvd_types=dic['cnvd_types'],
                 cnvd_refer_url=dic['cnvd_refer_url'],
@@ -75,6 +76,7 @@ class CnvdSpiderInfoPipeline(object):
             )
             session.add(obc)
             session.commit()
-        except:
-            pass
+            print("\n"+dic['cnvd_name']+" ==============存储成功\n")
+        except BaseException as e:
+            print(e)
         return item
