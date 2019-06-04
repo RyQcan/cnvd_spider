@@ -24,7 +24,7 @@ class CnvdSpiderItem(scrapy.Item):
     # 影响产品
     cnvd_products = scrapy.Field()
     # cve-id
-    # cnvd_cve_id = scrapy.Field()
+    cnvd_cve_id = scrapy.Field()
     # 漏洞描述
     cnvd_detail = scrapy.Field()
     # 漏洞类型

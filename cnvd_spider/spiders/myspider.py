@@ -24,7 +24,7 @@ class ExampleSpider(CrawlSpider):
 
     def parse_news(self, response):
         item = CnvdSpiderItem()
-        time.sleep(random.randint(1, 2))
+        # time.sleep(random.randint(1, 2))
         self.get_url(response, item)
         self.get_name(response, item)
         self.get_id(response, item)
@@ -32,7 +32,7 @@ class ExampleSpider(CrawlSpider):
         self.get_level(response, item)
         self.get_products(response, item)
 
-        # self.get_cve_id(response, item)
+        self.get_cve_id(response, item)
         self.get_detail(response, item)
         self.get_types(response, item)
         self.get_refer_url(response, item)
@@ -51,7 +51,7 @@ class ExampleSpider(CrawlSpider):
         print("\n======="+str(name)+"================\n")
         if name:
             item['cnvd_name'] = name[0].strip()
-            # print("cnvd_name: "+item['cnvd_name']+'\n')
+
     # 1
 
     def get_id(self, response, item):
@@ -71,13 +71,13 @@ class ExampleSpider(CrawlSpider):
     # 3
 
     def get_level(self, response, item):
-        level = response.xpath(
-            "//table[@class='gg_detail']//tr[td[1]='危害级别']/td[2]//text()").extract()
-        if level:
-            temp = ''
-            for i in range(len(level)):
-                temp += level[i].strip()
-            item['cnvd_level'] = temp
+        item["cnvd_level"] = response.xpath(
+            "//td[text()='危害级别']/following-sibling::td[1]//text()").extract()
+        if item["cnvd_level"]:
+            item["cnvd_level"] = "".join(
+                [i.replace("(", "").replace(")", "").strip() for i in item["cnvd_level"]])
+        else:
+            item["cnvd_level"] = 'Null'
 
     # 4
 
@@ -89,17 +89,17 @@ class ExampleSpider(CrawlSpider):
 
     # 5
 
-    # def get_cve_id(self, response, item):
-    #     try:
-    #         cve_id = response.xpath(
-    #             "//table[@class='gg_detail']//tr[td[1]='CVE ID']/td[2]//text()").extract()
-    #         if cve_id:
-    #             temp = ''
-    #             for i in range(len(cve_id)):
-    #                 temp += cve_id[i].strip()
-    #             item['cnvd_cve_id'] = temp
-    #     except:
-    #         item['cnvd_cve_id'] = ''
+    def get_cve_id(self, response, item):
+        try:
+            cve_id = response.xpath(
+                "//table[@class='gg_detail']//tr[td[1]='CVE ID']/td[2]//text()").extract()
+            if cve_id:
+                temp = ''
+                for i in range(len(cve_id)):
+                    temp += cve_id[i].strip()
+                item['cnvd_cve_id'] = temp
+        except:
+            item['cnvd_cve_id'] = ''
 
     # 6
 
