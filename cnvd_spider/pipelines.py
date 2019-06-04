@@ -22,7 +22,7 @@ session = Session()
 class Cnvdtable(Base):
     __tablename__ = 'cnvd_table'
 
-    cnvd_id = Column(String(32),primary_key=True)
+    cnvd_id = Column(String(32), primary_key=True)
     cnvd_url = Column(String(64))
     cnvd_date = Column(DATE)
     cnvd_level = Column(String(64))
