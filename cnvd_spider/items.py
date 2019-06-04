@@ -10,17 +10,18 @@ import scrapy
 
 class CnvdSpiderItem(scrapy.Item):
     # define the fields for your item here like:
-    # name = scrapy.Field()
-    # url
-    cnvd_url = scrapy.Field()
-    # 名称
-    cnvd_name = scrapy.Field()
     # cnvd-id
     cnvd_id = scrapy.Field()
+    # url
+    cnvd_url = scrapy.Field()
     # 公开日期
     cnvd_date = scrapy.Field()
-    # 危害级别
+     # 危害级别
     cnvd_level = scrapy.Field()
+
+    # 名称
+    cnvd_name = scrapy.Field()
+   
     # 影响产品
     cnvd_products = scrapy.Field()
     # cve-id

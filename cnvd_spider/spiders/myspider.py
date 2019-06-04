@@ -7,6 +7,7 @@ from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 import time
 import random
+from datetime import date
 
 
 class ExampleSpider(CrawlSpider):
@@ -18,21 +19,21 @@ class ExampleSpider(CrawlSpider):
              callback="parse_news", follow=True),
     )
 
-    def printcn(uni):
-        for i in uni:
-            print(uni.encode('utf-8'))
+    # def printcn(uni):
+    #     for i in uni:
+    #         print(uni.encode('utf-8'))
 
     def parse_news(self, response):
         item = CnvdSpiderItem()
         # time.sleep(random.randint(1, 2))
-        self.get_url(response, item)
-        self.get_name(response, item)
         self.get_id(response, item)
+        self.get_url(response, item)
         self.get_date(response, item)
         self.get_level(response, item)
-        self.get_products(response, item)
-
         self.get_cve_id(response, item)
+
+        self.get_name(response, item)
+        self.get_products(response, item)
         self.get_detail(response, item)
         self.get_types(response, item)
         self.get_refer_url(response, item)
@@ -40,35 +41,40 @@ class ExampleSpider(CrawlSpider):
         return item
 
     def get_url(self, response, item):
-        url = response.url
-        if url:
-            item['cnvd_url'] = url
+        item['cnvd_url'] = response.url
 
     def get_name(self, response, item):
         name = response.xpath(
-            # "//div[@class='blkContainerSblk']//h1/text()").extract()
             "//h1/text()").extract()
         print("\n======="+str(name)+"================\n")
         if name:
             item['cnvd_name'] = name[0].strip()
 
-    # 1
+    # cnvd_id
 
     def get_id(self, response, item):
-        iid = response.xpath(
-            "//table[@class='gg_detail']//tr[td[1]='CNVD-ID']/td[2]/text()").extract()
-        if iid:
-            item['cnvd_id'] = iid[0].strip()
+        item["cnvd_id"] = response.xpath(
+            "//td[text()='CNVD-ID']/following-sibling::td[1]/text()").extract()
+        if item["cnvd_id"]:
+            item["cnvd_id"] = "".join(
+                [i.strip() for i in item["cnvd_id"]])
+        else:
+            item["cnvd_id"] = 'Null'
 
-    # 2
+    # 发布日期
 
     def get_date(self, response, item):
-        date = response.xpath(
-            "//table[@class='gg_detail']//tr[td[1]='公开日期']/td[2]/text()").extract()
-        if date:
-            item['cnvd_date'] = date[0].strip()
+        item["cnvd_date"] = response.xpath(
+            "//div[@class='tableDiv']/table[@class='gg_detail']//tr[2]/td[2]/text()").extract()
+        if item["cnvd_date"]:
+            item["cnvd_date"] = "".join(
+                [i.strip() for i in item["cnvd_date"]]).replace('-', '')
+            item["cnvd_date"] = self.convertstringtodate(item["cnvd_date"])
+        else:
+            item["cnvd_date"] = '2000-01-01'.replace('-', '')
+            item["cnvd_date"] = self.convertstringtodate(item["cnvd_date"])
 
-    # 3
+    # 危害级别
 
     def get_level(self, response, item):
         item["cnvd_level"] = response.xpath(
@@ -79,41 +85,39 @@ class ExampleSpider(CrawlSpider):
         else:
             item["cnvd_level"] = 'Null'
 
-    # 4
+    # 影响产品
 
     def get_products(self, response, item):
-        products = response.xpath(
+        item["cnvd_products"] = response.xpath(
             "//table[@class='gg_detail']//tr[td[1]='影响产品']/td[2]/text()").extract()
-        if products:
-            item['cnvd_products'] = products[0].strip()
+        if item["cnvd_products"]:
+            item["cnvd_products"] = ";".join(
+                [i.strip() for i in item["cnvd_products"]])
+        else:
+            item["cnvd_products"] = 'Null'
 
-    # 5
+    # cve_id
 
     def get_cve_id(self, response, item):
-        try:
-            cve_id = response.xpath(
-                "//table[@class='gg_detail']//tr[td[1]='CVE ID']/td[2]//text()").extract()
-            if cve_id:
-                temp = ''
-                for i in range(len(cve_id)):
-                    temp += cve_id[i].strip()
-                item['cnvd_cve_id'] = temp
-        except:
-            item['cnvd_cve_id'] = ''
+        item["cnvd_cve_id"] = response.xpath(
+            "//td[text()='CVE ID']/following-sibling::td[1]//text()").extract()
+        if item["cnvd_cve_id"]:
+            item["cnvd_cve_id"] = "".join(
+                [i.strip() for i in item["cnvd_cve_id"]])
+        else:
+            item["cnvd_cve_id"] = 'Null'
 
-    # 6
+    # 漏洞描述
 
     def get_detail(self, response, item):
-
-        detail = response.xpath(
-            "//table[@class='gg_detail']//tr[td[1]='漏洞描述']/td[2]//text()").extract()
-
-        if detail:
-            temp = ''
-            for i in range(len(detail)):
-                temp += detail[i].strip()
-            item['cnvd_detail'] = temp
-    # 7
+        item["cnvd_detail"] = response.xpath(
+            "//td[text()='漏洞描述']/following-sibling::td[1]//text()").extract()
+        if item["cnvd_detail"]:
+            item["cnvd_detail"] = "".join(
+                [i.strip() for i in item["cnvd_detail"]]).replace("\u200b", "")
+        else:
+            item["cnvd_detail"] = 'Null'
+    # 漏洞类型
 
     def get_types(self, response, item):
 
@@ -123,26 +127,42 @@ class ExampleSpider(CrawlSpider):
         if types:
             item['cnvd_types'] = types[0].strip()
 
-    # 8
+    # 参考链接
     def get_refer_url(self, response, item):
+        item["cnvd_refer_url"] = response.xpath(
+            "//td[text()='参考链接']/following-sibling::td[1]/a/@href").extract()
+        if item["cnvd_refer_url"]:
+            item["cnvd_refer_url"] = item["cnvd_refer_url"][0].replace(
+                '\r', '')
+        else:
+            item["cnvd_refer_url"] = 'Null'
 
-        refer_url = response.xpath(
-            "//table[@class='gg_detail']//tr[td[1]='参考链接']/td[2]//text()").extract()
-
-        if refer_url:
-            temp = ''
-            for i in range(len(refer_url)):
-                temp += refer_url[i].strip()
-            item['cnvd_refer_url'] = temp
-
-    # 9
+    # 漏洞解决方案
 
     def get_method(self, response, item):
+        item["cnvd_method"] = response.xpath(
+            "//td[text()='漏洞解决方案']/following-sibling::td[1]//text()").extract()
+        if item["cnvd_method"]:
+            item["cnvd_method"] = "".join(
+                [i.strip() for i in item["cnvd_method"]])
+        else:
+            item["cnvd_method"] = 'Null'
 
-        method = response.xpath(
-            "//table[@class='gg_detail']//tr[td[1]='漏洞解决方案']/td[2]/text()").extract()
+    def convertstringtodate(self, stringtime):
+        "把字符串类型转换为date类型"
+        #  把数据里的时间格式替换成数据库需要的格式。日期格式，便于后期提取数据，
+        if stringtime[0:2] == "20":
+            year = stringtime[0:4]
+            month = stringtime[4:6]
+            day = stringtime[6:8]
+            if day == "":
+                day = "01"
+            begintime = date(int(year), int(month), int(day))
+            return begintime
+        else:
+            year = "20" + stringtime[0:2]
+            month = stringtime[2:4]
+            day = stringtime[4:6]
 
-        if method:
-            item['cnvd_method'] = ''
-            for i in range(len(method)):
-                item['cnvd_method'] += method[i].strip()
+            begintime = date(int(year), int(month), int(day))
+            return begintime
