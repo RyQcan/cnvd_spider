@@ -29,7 +29,7 @@ class Cnvdtable(Base):
     cnvd_cve_id = Column(String(32))
 
     cnvd_name = Column(String(512))
-    cnvd_products = Column(String(512))
+    cnvd_products = Column(TEXT)
     cnvd_detail = Column(TEXT)
     cnvd_types = Column(String(32))
     cnvd_refer_url = Column(String(512))

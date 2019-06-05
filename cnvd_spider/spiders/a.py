@@ -9,7 +9,7 @@ def COOKIES():
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(chrome_options=chrome_options)
-    driver.get("http://www.cnvd.org.cn/flaw/show/CNVD-2017-27958")
+    driver.get("https://www.cnvd.org.cn/flaw/list.htm?max=20&offset=2050")
     cj = driver.get_cookies()
     cookie = ''
     for c in cj:
@@ -18,8 +18,9 @@ def COOKIES():
         # else:
         cookie += "'"+c['name'] + "':'" + c['value'] + "',"
     cookie=ast.literal_eval('{'+cookie+'}')
-    return cookie
     driver.quit()
+    return cookie
+    
 
 
 print(COOKIES())

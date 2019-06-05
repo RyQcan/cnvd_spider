@@ -30,10 +30,10 @@ class ExampleSpider(CrawlSpider):
     )
 
     allowed_domains = ["www.cnvd.org.cn"]
-    start_urls = ['http://www.cnvd.org.cn/flaw/show/CNVD-2017-27958']
+    start_urls = ['https://www.cnvd.org.cn/flaw/list.htm?max=20&offset=2050']
 
     def start_requests(self):
-        yield scrapy.Request(url='http://www.cnvd.org.cn/flaw/show/CNVD-2017-27958', headers=self.headers, cookies=self.cookie, meta={'cookiejar': 1})
+        yield scrapy.Request(url='https://www.cnvd.org.cn/flaw/list.htm?max=20&offset=2050', headers=self.headers, cookies=self.cookie, meta={'cookiejar': 1})
 
     def _requests_to_follow(self, response):
         # 重写加入cookiejar的更新
@@ -56,7 +56,8 @@ class ExampleSpider(CrawlSpider):
 
     def parse_news(self, response):
         item = CnvdSpiderItem()
-        # time.sleep(random.randint(10,11))
+        cookie=COOKIES()
+        time.sleep(random.randint(1,2))
         self.get_id(response, item)
         self.get_url(response, item)
         self.get_date(response, item)
