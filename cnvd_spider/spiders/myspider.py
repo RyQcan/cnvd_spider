@@ -9,23 +9,54 @@ import time
 import random
 from datetime import date
 
+from scrapy import FormRequest
+from scrapy.http import Request
+from scrapy.http import HtmlResponse
+from .a import COOKIES
+
 
 class ExampleSpider(CrawlSpider):
     name = "myspider"
-    allowed_domains = ["www.cnvd.org.cn"]
-    start_urls = ['http://www.cnvd.org.cn/flaw/list.htm?max=20&offset=20']
+
+    cookie = COOKIES()
+    headers = {
+        'Connection': 'keep - alive',  # 保持链接状态
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
+        'Referer': 'https://www.cnvd.org.cn/'
+    }
     rules = (
-        Rule(LinkExtractor(allow=r"/flaw/show/*", unique=True),
+        Rule(LinkExtractor(allow=r"www.cnvd.org.cn/flaw/show/*", unique=True),
              callback="parse_news", follow=True),
     )
 
-    # def printcn(uni):
-    #     for i in uni:
-    #         print(uni.encode('utf-8'))
+    allowed_domains = ["www.cnvd.org.cn"]
+    start_urls = ['http://www.cnvd.org.cn/flaw/show/CNVD-2017-27958']
+
+    def start_requests(self):
+        yield scrapy.Request(url='http://www.cnvd.org.cn/flaw/show/CNVD-2017-27958', headers=self.headers, cookies=self.cookie, meta={'cookiejar': 1})
+
+    def _requests_to_follow(self, response):
+        # 重写加入cookiejar的更新
+        if not isinstance(response, HtmlResponse):
+            return
+        seen = set()
+        for n, rule in enumerate(self._rules):
+            links = [l for l in rule.link_extractor.extract_links(
+                response) if l not in seen]
+            if links and rule.process_links:
+                links = rule.process_links(links)
+            for link in links:
+                seen.add(link)
+                r = Request(url=link.url, callback=self._response_downloaded)
+                # 下面这句是我重写的
+                r.meta.update(rule=n, link_text=link.text,
+                              cookiejar=response.meta['cookiejar'])
+                            #   response.meta['cookiejar']
+                yield rule.process_request(r)
 
     def parse_news(self, response):
         item = CnvdSpiderItem()
-        # time.sleep(random.randint(1, 2))
+        # time.sleep(random.randint(10,11))
         self.get_id(response, item)
         self.get_url(response, item)
         self.get_date(response, item)
@@ -46,7 +77,7 @@ class ExampleSpider(CrawlSpider):
     def get_name(self, response, item):
         name = response.xpath(
             "//h1/text()").extract()
-        print("\n======="+str(name)+"================\n")
+        # print("\n======="+response.meta['cookiejar']+"================\n")
         if name:
             item['cnvd_name'] = name[0].strip()
 
