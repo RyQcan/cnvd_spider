@@ -4,7 +4,7 @@ from cnvd_spider.items import CnvdSpiderItem
 import re
 from scrapy.selector import Selector
 from scrapy.linkextractors import LinkExtractor
-from scrapy.spiders import CrawlSpider, Rule
+from scrapy.spiders import CrawlSpider, Rule, Spider
 import time
 import random
 from datetime import date
@@ -41,8 +41,9 @@ class ExampleSpider(CrawlSpider):
         # meta={'dont_merge_cookies': True},
         # meta={'cookiejar': response.meta['cookiejar']},
 
-        r = Request(url=link.url, headers=self.headers, cookies=self.cookies,
+        r = Request(url=link.url, headers=self.headers, cookies=self.cookies,meta={'dont_merge_cookies': True},
                     callback=self._response_downloaded)
+        # r.meta['dont_merge_cookies']=True
         r.meta.update(rule=rule, link_text=link.text)
         return r
 
@@ -85,7 +86,7 @@ class ExampleSpider(CrawlSpider):
         time.sleep(random.randint(2, 3))
         self.count += 1
         print(self.count)
-
+        print(self.cookies)
         if (self.count == 3):
             self.cookies = self.get_cnvd_cookies()
             self.count = 0
