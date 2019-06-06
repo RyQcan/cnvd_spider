@@ -8,21 +8,19 @@ from scrapy.spiders import CrawlSpider, Rule
 import time
 import random
 from datetime import date
-
 from scrapy import FormRequest
-from scrapy.http import Request
-from scrapy.http import HtmlResponse
-from .a import COOKIES
+from scrapy.http import Request, HtmlResponse
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import ast
 
 
 class ExampleSpider(CrawlSpider):
     name = "myspider"
-
-    cookie = COOKIES()
+    count = 0
+    cookies = {}
     headers = {
-        'Connection': 'keep - alive',  # 保持链接状态
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
-        'Referer': 'https://www.cnvd.org.cn/'
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.80 Safari/537.36'
     }
     rules = (
         Rule(LinkExtractor(allow=r"www.cnvd.org.cn/flaw/show/*", unique=True),
@@ -30,40 +28,74 @@ class ExampleSpider(CrawlSpider):
     )
 
     allowed_domains = ["www.cnvd.org.cn"]
-    start_urls = ['https://www.cnvd.org.cn/flaw/list.htm?max=20&offset=2050']
+    # start_urls = ['https://www.cnvd.org.cn/flaw/list.htm?max=20&offset=2050']
 
     def start_requests(self):
-        yield scrapy.Request(url='https://www.cnvd.org.cn/flaw/list.htm?max=20&offset=2050', headers=self.headers, cookies=self.cookie, meta={'cookiejar': 1})
+        self.cookies = self.get_cnvd_cookies()
+        # ,  meta={'cookiejar': 1}
+        yield scrapy.Request(url='https://www.cnvd.org.cn/flaw/list.htm?max=20&offset=2050', headers=self.headers, cookies=self.cookies)
 
-    def _requests_to_follow(self, response):
-        # 重写加入cookiejar的更新
-        if not isinstance(response, HtmlResponse):
-            return
-        seen = set()
-        for n, rule in enumerate(self._rules):
-            links = [l for l in rule.link_extractor.extract_links(
-                response) if l not in seen]
-            if links and rule.process_links:
-                links = rule.process_links(links)
-            for link in links:
-                seen.add(link)
-                r = Request(url=link.url, callback=self._response_downloaded)
-                # 下面这句是我重写的
-                r.meta.update(rule=n, link_text=link.text,
-                              cookiejar=response.meta['cookiejar'])
-                            #   response.meta['cookiejar']
-                yield rule.process_request(r)
+    def _build_request(self, rule, link):
+        # 给Request带上headers，因为scrapy会记录cookies，此处不带cookies也可。
+        # 当然给Request带上cookies操作也很简单，加上cookies=获得cookies即可
+        # meta={'dont_merge_cookies': True},
+        # meta={'cookiejar': response.meta['cookiejar']},
+
+        r = Request(url=link.url, headers=self.headers, cookies=self.cookies,
+                    callback=self._response_downloaded)
+        r.meta.update(rule=rule, link_text=link.text)
+        return r
+
+    # def _requests_to_follow(self, response):
+    #     if not isinstance(response, HtmlResponse):
+    #         return
+    #     seen = set()
+ 
+    #     for n, rule in enumerate(self._rules):
+    #         links = [lnk for lnk in rule.link_extractor.extract_links(response)
+    #                  if lnk not in seen]
+    #         if links and rule.process_links:
+    #             links = rule.process_links(links)
+    #         for link in links:
+    #             seen.add(link)
+                
+    #             r = self._build_request(n, link)
+    #             yield rule.process_request(r)
+    # def _requests_to_follow(self, response):
+    #     # 重写加入cookiejar的更新
+    #     if not isinstance(response, HtmlResponse):
+    #         return
+    #     seen = set()
+    #     for n, rule in enumerate(self._rules):
+    #         links = [l for l in rule.link_extractor.extract_links(
+    #             response) if l not in seen]
+    #         if links and rule.process_links:
+    #             links = rule.process_links(links)
+    #         for link in links:
+    #             seen.add(link)
+    #             r = Request(url=link.url,cookies=self.cookies, callback=self._response_downloaded)
+    #             # 下面这句是我重写的
+    #             r.meta.update(rule=n, link_text=link.text,
+    #                           cookiejar=response.meta['cookiejar'])
+    #             yield rule.process_request(r)
 
     def parse_news(self, response):
+        response.headers = {}
         item = CnvdSpiderItem()
-        cookie=COOKIES()
-        time.sleep(random.randint(1,2))
+        time.sleep(random.randint(2, 3))
+        self.count += 1
+        print(self.count)
+
+        if (self.count == 3):
+            self.cookies = self.get_cnvd_cookies()
+            self.count = 0
+        # self.cookies = self.get_cnvd_cookies()
         self.get_id(response, item)
         self.get_url(response, item)
         self.get_date(response, item)
         self.get_level(response, item)
         self.get_cve_id(response, item)
-
+        time.sleep(random.randint(1, 2))
         self.get_name(response, item)
         self.get_products(response, item)
         self.get_detail(response, item)
@@ -72,7 +104,23 @@ class ExampleSpider(CrawlSpider):
         self.get_method(response, item)
         return item
 
+    def get_cnvd_cookies(self):
+        chrome_options = Options()
+        # 加上下面两行，解决报错
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        driver = webdriver.Chrome(chrome_options=chrome_options)
+        driver.get("https://www.cnvd.org.cn/flaw/list.htm?max=20&offset=2550")
+        cj = driver.get_cookies()
+        cookie = ''
+        for c in cj:
+            cookie += "'"+c['name'] + "':'" + c['value'] + "',"
+        cookie = ast.literal_eval('{'+cookie+'}')
+        driver.quit()
+        return cookie
+
     def get_url(self, response, item):
+        time.sleep(random.randint(1, 2))
         item['cnvd_url'] = response.url
 
     def get_name(self, response, item):
