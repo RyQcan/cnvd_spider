@@ -23,7 +23,7 @@
 
 ## 功能
 
-* 按爬取cnvd的漏洞详情,起始url在代码中修改
+* 爬取cnvd的漏洞详情,起始url在代码中修改
 
 * 使用sqlchemy保存数据,也可以改为csv文件存储
 
@@ -35,7 +35,7 @@
 
 * 修改数据库连接语句
 
-* python包:scrapy/downloadermiddelwares/cookies.py 修改为
+* python包:`scrapy/downloadermiddelwares/cookies.py` `process_request`修改为
 
 ```python
  def process_request(self, request, spider):
