@@ -31,9 +31,30 @@
 
 ## 使用前须知
 
-* 修改User-Agent
+* 修改User-Agent 必须与你本地的chrome一样
+
 * 修改数据库连接语句
+
+* /scrapy/downloadermiddelwares/cookies.py 修改为
+
+```python
+ def process_request(self, request, spider):
+        cookiejarkey = request.meta.get("cookiejar")
+        jar = self.jars[cookiejarkey]
+
+        if request.meta.get('dont_merge_cookies', False):
+            jar = CookieJar()
+
+        cookies = self._get_request_cookies(jar, request)
+        for cookie in cookies:
+            jar.set_cookie_if_ok(cookie, request)
+
+        # set Cookie header
+        request.headers.pop('Cookie', None)
+        jar.add_cookie_header(request)
+        self._debug_cookie(request, spider)
+```
 
 ## 避坑
 
-未完成
+scrapy官方有坑,,dont_merge_cookies 开启后实际功能是不发送cookies,所以需要修改官方代码/scrapy/downloadermiddelwares/cookies.py
