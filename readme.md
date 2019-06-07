@@ -2,32 +2,32 @@
 
 ## 环境
 
-软件 |版本 
- -|-
- python|3.6
- scrapy|
- sqlalchemy|
- selenium|
- mysql|5.7
+| 软件                 | 版本                              |
+| -------------------- | --------------------------------- |
+| python               | 3.6                               |
+| mysql                | 5.7                               |
+| google-chrome-stable | 建议添加google官方仓库然后apt安装 |
+| chromedriver         | 与chrome版本一致                  |
+
+| python库   | 版本   |
+| ---------- | ------ |
+| scrapy     | latest |
+| sqlalchemy | latest |
+| selenium   | latest |
+
+安装出错时请先升级pip
 
 `sudo python3 -m pip install --upgrade pip`
 
 `sudo python3 -m pip install --upgrade setuptools`
 
-`sudo python3 -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple/ scrapy`
-
-`sudo python3 -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple/ sqlalchemy`
-
-## 运行
-
-`python3 main.py`
-
-
 ## 功能
 
-* 按顺序依次爬取cnvd的漏洞详情,起始url在代码中修改
+* 按爬取cnvd的漏洞详情,起始url在代码中修改
 
 * 使用sqlchemy保存数据,也可以改为csv文件存储
+
+* 使用selenium打开浏览器获取cookie,每7次请求更新cookie
 
 ## 使用前须知
 
@@ -35,7 +35,7 @@
 
 * 修改数据库连接语句
 
-* /scrapy/downloadermiddelwares/cookies.py 修改为
+* python包:scrapy/downloadermiddelwares/cookies.py 修改为
 
 ```python
  def process_request(self, request, spider):
@@ -54,6 +54,10 @@
         jar.add_cookie_header(request)
         self._debug_cookie(request, spider)
 ```
+
+## 运行
+
+`sudo python3 main.py`
 
 ## 避坑
 

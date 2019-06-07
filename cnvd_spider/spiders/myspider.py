@@ -13,7 +13,7 @@ from scrapy.http import Request, HtmlResponse
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import ast
-
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 class ExampleSpider(CrawlSpider):
     name = "myspider"
@@ -120,6 +120,27 @@ class ExampleSpider(CrawlSpider):
         cookie = ast.literal_eval('{'+cookie+'}')
         driver.quit()
         return cookie
+    # def get_cnvd_cookies(self):
+    #     chrome_options = Options()
+    #     # 加上下面两行，解决报错
+    #     chrome_options.add_argument('--no-sandbox')
+    #     # chrome_options.add_argument('--no-startup-window')
+    #     # chrome_options.add_argument('--headless')
+    #     chrome_options.add_argument('--disable-dev-shm-usage')
+    #     driver = webdriver.Chrome(
+    #         chrome_options=chrome_options,
+    #         desired_capabilities=DesiredCapabilities.CHROME
+    #     )
+    #     driver.viewportSize = {'width': 1280, 'height': 800}
+    #     driver.get("https://www.cnvd.org.cn/flaw/list.htm?max=20&offset=2550")
+    #     driver.maximize_window()
+    #     cj = driver.get_cookies()
+    #     cookie = ''
+    #     for c in cj:
+    #         cookie += "'" + c['name'] + "':'" + c['value'] + "',"
+    #     cookie = ast.literal_eval('{' + cookie + '}')
+    #     driver.quit()
+    #     return cookie
 
     def get_url(self, response, item):
         time.sleep(random.randint(1, 2))
